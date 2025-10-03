@@ -35,7 +35,7 @@ docker run --rm -e PROXY_API_KEY=yourkey -e OLLAMA_UPSTREAM=https://ollama.examp
 Test an endpoint:
 
 ```powershell
-curl -X GET "http://127.0.0.1:8000/api/v1/ollama/models" -H "X-API-Key: yourkey"
+curl -X GET "http://127.0.0.1:8000/api/models" -H "X-API-Key: yourkey"
 ```
 
 ## Environment variables
