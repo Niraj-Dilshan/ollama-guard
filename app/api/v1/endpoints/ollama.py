@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.responses import StreamingResponse
 
+from app.ratelimit import limiter
+
 load_dotenv()
 
 # Upstream Ollama server and auth configuration
@@ -66,13 +68,19 @@ def _filter_response_headers(headers: Dict[str, str]) -> Dict[str, str]:
 
 
 @router.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])  # type: ignore[arg-type]
+@limiter.limit("100/minute")
 async def proxy(request: Request, _=Depends(verify_api_key)):
     """Proxy any path under this router to the configured UPSTREAM.
 
-    Example: POST /api/v1/ollama/models -> forwards to {UPSTREAM}/models
+    Example: POST /api/models -> forwards to {UPSTREAM}/models
     This preserves query params and most headers but strips Authorization/Host.
     """
-    full_path = request.url.path.replace("/api/", "", 1)
+    # The router is mounted at /api, so strip that prefix to get the upstream path
+    # For /api/models -> models, /api/v1/tags -> v1/tags
+    router_prefix = "/api"
+    if not request.url.path.startswith(router_prefix + "/"):
+        raise HTTPException(status_code=500, detail="Unexpected routing configuration")
+    full_path = request.url.path[len(router_prefix) :].lstrip("/")
     upstream_url = f"{UPSTREAM.rstrip('/')}/{full_path}"
 
     method = request.method
