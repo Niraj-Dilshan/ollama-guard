@@ -66,12 +66,13 @@ def _filter_response_headers(headers: Dict[str, str]) -> Dict[str, str]:
 
 
 @router.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])  # type: ignore[arg-type]
-async def proxy(full_path: str, request: Request, _=Depends(verify_api_key)):
+async def proxy(request: Request, _=Depends(verify_api_key)):
     """Proxy any path under this router to the configured UPSTREAM.
 
     Example: POST /api/v1/ollama/models -> forwards to {UPSTREAM}/models
     This preserves query params and most headers but strips Authorization/Host.
     """
+    full_path = request.url.path.replace("/api/", "", 1)
     upstream_url = f"{UPSTREAM.rstrip('/')}/{full_path}"
 
     method = request.method

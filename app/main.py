@@ -17,7 +17,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(hello.router, prefix="/api/v1")
-    app.include_router(ollama.router, prefix="/api/v1/ollama")
+    app.include_router(ollama.router, prefix="/api")
 
     return app
 
