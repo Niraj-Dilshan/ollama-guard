@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.responses import StreamingResponse
 
+from app.ratelimit import limiter
+
 load_dotenv()
 
 # Upstream Ollama server and auth configuration
@@ -66,6 +68,7 @@ def _filter_response_headers(headers: Dict[str, str]) -> Dict[str, str]:
 
 
 @router.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])  # type: ignore[arg-type]
+@limiter.limit("100/minute")
 async def proxy(request: Request, _=Depends(verify_api_key)):
     """Proxy any path under this router to the configured UPSTREAM.
 
